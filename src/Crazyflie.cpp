@@ -188,25 +188,35 @@ void Crazyflie::notifySetpointsStop(uint32_t remainValidMillisecs)
   crtpNotifySetpointsStopRequest req(remainValidMillisecs);
   m_connection.send(req);
 }
+void Crazyflie::sendExternalPoseUpdate(
+  float x, float y, float z,
+  float qx, float qy, float qz, float qw)
+{
 
-#if 0
+  // last 8 bytes for the uri of the crazyflie
+  const uint64_t address = this->address();
+  const uint8_t id = address;
+
+  crtpExternalPosePacked req;
+  float q[4] = {qx, qy, qz, qw};
+  uint32_t quat = quatcompress(q);
+  req.add(id, x * 1000, y * 1000, z * 1000, quat);
+  m_connection.send(req);
+}
+
+
 void Crazyflie::sendExternalPositionUpdate(
   float x,
   float y,
   float z)
 {
-  crtpExternalPositionUpdate position(x, y, z);
-  sendPacket(position);
+  crtpExternalPositionPacked req;
+  const uint64_t address = this->address();
+  const uint8_t id = address;
+  req.add(id, x * 1000, y * 1000, z * 1000);
+  m_connection.send(req);
 }
 
-void Crazyflie::sendExternalPoseUpdate(
-  float x, float y, float z,
-  float qx, float qy, float qz, float qw)
-{
-  crtpExternalPoseUpdate pose(x, y, z, qx, qy, qz, qw);
-  sendPacket(pose);
-}
-#endif
 void Crazyflie::sendPing()
 {
   auto p = m_connection.recv(1);
@@ -1174,6 +1184,7 @@ void CrazyflieBroadcaster::startTrajectory(
 void CrazyflieBroadcaster::sendExternalPositions(
     const std::vector<externalPosition> &data)
 {
+
   crtpExternalPositionPacked req;
   size_t j = 0;
   for (size_t i = 0; i < data.size(); ++i)
