@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-[![CMake](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake.yml)
-=======
 [![CMake](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake.yml/badge.svg?branch=dev-crazyflie-link-cpp)](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake.yml) [![CMake (Windows)](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake_win.yml/badge.svg)](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake_win.yml) [![CMake (Mac)](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake_mac.yml/badge.svg)](https://github.com/whoenig/crazyflie_cpp/actions/workflows/cmake_mac.yml)
->>>>>>> dev-crazyflie-link-cpp
 
 # Crazyflie_cpp
 
