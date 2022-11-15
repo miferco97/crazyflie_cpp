@@ -8,7 +8,7 @@
 
 // compress a unit quaternion into 32 bits.
 // assumes input quaternion is normalized. will fail if not.
-static inline uint32_t quatcompress(float const q[4])
+uint32_t quatcompress(float const q[4])
 {
 	// we send the values of the quaternion's smallest 3 elements.
 	unsigned i_largest = 0;
@@ -64,6 +64,236 @@ void quatdecompress(uint32_t comp, float q[4])
 	q[i_largest] = sqrtf(1.0f - sum_squares);
 }
 
+// Port 0 (Console)
+
+bool crtpConsoleResponse::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.port() == 0 &&
+         p.channel() == 0 &&
+         p.payloadSize() > 0;
+}
+
+std::string crtpConsoleResponse::text(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.payloadAtString(0);
+}
+
+// Port 2 (Parameters)
+
+crtpParamTocGetItemV2Request::crtpParamTocGetItemV2Request(uint16_t id)
+	: Packet(2, 0, 3)
+{
+	setPayloadAt<uint8_t>(0, 2);
+	setPayloadAt<uint16_t>(1, id);
+}
+
+bool crtpParamTocGetItemV2Response::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.port() == 2 &&
+		   p.channel() == 0 &&
+		   p.payloadSize() > 3 &&
+		   p.payloadAt<uint8_t>(0) == 2;
+}
+
+uint16_t crtpParamTocGetItemV2Response::id(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint16_t>(1);
+}
+
+ParamType crtpParamTocGetItemV2Response::type(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return (ParamType)(p.payloadAt<uint8_t>(3) & 0xF);
+}
+
+bool crtpParamTocGetItemV2Response::readonly(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return (p.payloadAt<uint8_t>(3) >> 6) & 0x1;
+}
+
+std::pair<std::string, std::string> crtpParamTocGetItemV2Response::groupAndName(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	auto group =  p.payloadAtString(4);
+	auto name = p.payloadAtString(4+group.length()+1);
+	return std::make_pair(group, name);
+}
+
+
+crtpParamTocGetInfoV2Request::crtpParamTocGetInfoV2Request()
+	: Packet(2, 0, 1)
+{
+	setPayloadAt<uint8_t>(0, 3);
+}
+
+bool crtpParamTocGetInfoV2Response::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.port() == 2 &&
+		   p.channel() == 0 &&
+		   p.payloadSize() == 7 &&
+		   p.payloadAt<uint8_t>(0) == 3;
+}
+
+uint16_t crtpParamTocGetInfoV2Response::numParams(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<int>(1);
+}
+
+uint32_t crtpParamTocGetInfoV2Response::crc(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<int>(1);
+}
+
+
+crtpParamReadV2Request::crtpParamReadV2Request(uint16_t id)
+	: Packet(2, 1, 2)
+{
+	setPayloadAt<uint16_t>(0, id);
+}
+
+bool crtpParamValueV2Response::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.port() == 2 &&
+		   (p.channel() == 1 || p.channel() == 2) &&
+		   p.payloadSize() > 2;
+}
+
+uint16_t crtpParamValueV2Response::id(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint16_t>(0);
+}
+
+uint8_t crtpParamValueV2Response::status(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint8_t>(2);
+}
+
+// Port 5 (Logging)
+
+crtpLogGetInfoV2Request::crtpLogGetInfoV2Request()
+	: Packet(5, 0, 1)
+{
+	setPayloadAt<uint8_t>(0, 3);
+}
+
+bool crtpLogGetInfoV2Response::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.port() == 5 &&
+		   p.channel() == 0 &&
+		   p.payloadSize() == 9 &&
+		   p.payloadAt<uint8_t>(0) == 3;
+}
+
+uint16_t crtpLogGetInfoV2Response::numLogVariables(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint16_t>(1);
+}
+
+uint32_t crtpLogGetInfoV2Response::crc(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint32_t>(3);
+}
+
+uint8_t crtpLogGetInfoV2Response::numMaxLogBlocks(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint8_t>(7);
+}
+
+uint8_t crtpLogGetInfoV2Response::numMaxOps(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint8_t>(8);
+}
+
+crtpLogGetItemV2Request::crtpLogGetItemV2Request(uint16_t id)
+	: Packet(5, 0, 3)
+{
+	setPayloadAt<uint8_t>(0, 2);
+	setPayloadAt<uint16_t>(1, id);
+}
+
+bool crtpLogGetItemV2Response::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.port() == 5 &&
+		   p.channel() == 0 &&
+		   p.payloadSize() > 3 &&
+		   p.payloadAt<uint8_t>(0) == 2;
+}
+
+uint16_t crtpLogGetItemV2Response::id(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint16_t>(1);
+}
+
+uint8_t crtpLogGetItemV2Response::type(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	return p.payloadAt<uint8_t>(3);
+}
+
+std::pair<std::string, std::string> crtpLogGetItemV2Response::groupAndName(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+	auto group = p.payloadAtString(4);
+	auto name = p.payloadAtString(4 + group.length() + 1);
+	return std::make_pair(group, name);
+}
+
+// Port 13 (Platform)
+
+crtpGetProtocolVersionRequest::crtpGetProtocolVersionRequest()
+  : Packet(13, 1, 1)
+{
+  setPayloadAt<uint8_t>(0, 0);
+}
+
+bool crtpGetProtocolVersionResponse::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return  p.port() == 13 &&
+          p.channel() == 1 &&
+          p.payloadSize() == 5 &&
+          p.payloadAt<uint8_t>(0) == 0;
+}
+
+int crtpGetProtocolVersionResponse::version(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.payloadAt<int>(1);
+}
+
+crtpGetFirmwareVersionRequest::crtpGetFirmwareVersionRequest()
+    : Packet(13, 1, 1)
+{
+  setPayloadAt<uint8_t>(0, 1);
+}
+
+bool crtpGetFirmwareVersionResponse::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.port() == 13 &&
+         p.channel() == 1 &&
+         p.payloadSize() > 1 &&
+         p.payloadAt<uint8_t>(0) == 1;
+}
+
+std::string crtpGetFirmwareVersionResponse::version(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.payloadAtString(1);
+}
+
+crtpGetDeviceTypeNameRequest::crtpGetDeviceTypeNameRequest()
+    : Packet(13, 1, 1)
+{
+  setPayloadAt<uint8_t>(0, 2);
+}
+
+bool crtpGetDeviceTypeNameResponse::valid(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.port() == 13 &&
+         p.channel() == 1 &&
+         p.payloadSize() > 1 &&
+         p.payloadAt<uint8_t>(0) == 2;
+}
+
+std::string crtpGetDeviceTypeNameResponse::name(const bitcraze::crazyflieLinkCpp::Packet &p)
+{
+  return p.payloadAtString(1);
+}
+
+#if 0
 crtpFullStateSetpointRequest::crtpFullStateSetpointRequest(
   float x, float y, float z,
   float vx, float vy, float vz,
@@ -215,3 +445,4 @@ crtpParamSetByNameRequest<float>::crtpParamSetByNameRequest(
 	: crtpParamSetByNameRequest(group, name, ParamTypeFloat, &value, sizeof(float))
 {
 }
+#endif
